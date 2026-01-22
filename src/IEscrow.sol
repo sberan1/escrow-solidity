@@ -2,7 +2,14 @@
 pragma solidity ^0.8.10;
 
 interface IEscrow {
-    enum State { AWAITING_PAYMENT, AWAITING_DELIVERY, COMPLETE, DISPUTED, REFUNDED, CANCELED }
+    enum State {
+        AWAITING_PAYMENT,
+        AWAITING_DELIVERY,
+        COMPLETE,
+        DISPUTED,
+        REFUNDED,
+        CANCELED
+    }
 
     struct Escrow {
         address buyer;
@@ -22,8 +29,9 @@ interface IEscrow {
     event Disputed(uint256 indexed escrowId, string evidenceUrl);
     event Cancelled(uint256 indexed escrowId);
 
-
-    function createEscrow(address _buyer, address payable _seller, address _arbiter, uint256 _requestedAmount) external returns (uint256);
+    function createEscrow(address _buyer, address payable _seller, address _arbiter, uint256 _requestedAmount)
+        external
+        returns (uint256);
     function deposit(uint256 _escrowId) external payable;
     function checkEscrow(uint256 _escrowId) external view returns (Escrow memory);
     function markShipped(uint256 _escrowId) external;

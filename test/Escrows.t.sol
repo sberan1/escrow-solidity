@@ -5,7 +5,6 @@ import "forge-std/Test.sol";
 import "../src/Escrows.sol";
 import "../src/IEscrow.sol";
 
-
 contract EscrowsTest is Test {
     Escrows public escrows;
 
@@ -36,14 +35,15 @@ contract EscrowsTest is Test {
 
         uint256 id = createEscrow();
 
-        (address _buyer, address _seller, address _arbiter, uint256 amount, uint256 req, IEscrow.State state,) = escrows.escrows(id);
+        (address _buyer, address _seller, address _arbiter, uint256 amount, uint256 req, IEscrow.State state,) =
+            escrows.escrows(id);
 
         assertEq(_buyer, buyer);
         assertEq(_seller, seller);
         assertEq(_arbiter, arbiter);
         assertEq(amount, 0);
         assertEq(req, PRICE);
-        assertEq(uint(state), uint(IEscrow.State.AWAITING_PAYMENT));
+        assertEq(uint256(state), uint256(IEscrow.State.AWAITING_PAYMENT));
     }
 
     function test_Deposit() public {
@@ -57,7 +57,7 @@ contract EscrowsTest is Test {
 
         (,,, uint256 amount,, IEscrow.State state,) = escrows.escrows(id);
         assertEq(amount, PRICE);
-        assertEq(uint(state), uint(IEscrow.State.AWAITING_DELIVERY));
+        assertEq(uint256(state), uint256(IEscrow.State.AWAITING_DELIVERY));
     }
 
     function test_HappyPath_Complete() public {
@@ -77,7 +77,7 @@ contract EscrowsTest is Test {
         escrows.confirmDelivery(id);
 
         (,,,,, IEscrow.State state,) = escrows.escrows(id);
-        assertEq(uint(state), uint(IEscrow.State.COMPLETE));
+        assertEq(uint256(state), uint256(IEscrow.State.COMPLETE));
         assertEq(seller.balance, sellerBalanceBefore + PRICE);
     }
 
@@ -96,7 +96,7 @@ contract EscrowsTest is Test {
         assertEq(escrows.getEvidence(id), url);
 
         (,,,,, IEscrow.State state,) = escrows.escrows(id);
-        assertEq(uint(state), uint(IEscrow.State.DISPUTED));
+        assertEq(uint256(state), uint256(IEscrow.State.DISPUTED));
 
         uint256 buyerBalanceBefore = buyer.balance;
 
@@ -104,7 +104,7 @@ contract EscrowsTest is Test {
         escrows.decideDispute(id, 0, PRICE); // 0 to seller, PRICE to buyer
 
         (,,,,, state,) = escrows.escrows(id);
-        assertEq(uint(state), uint(IEscrow.State.REFUNDED));
+        assertEq(uint256(state), uint256(IEscrow.State.REFUNDED));
         assertEq(buyer.balance, buyerBalanceBefore + PRICE);
     }
 
@@ -121,14 +121,14 @@ contract EscrowsTest is Test {
         escrows.deposit{value: PRICE}(id);
 
         string memory url = "https://ipfs.io/ipfs/QmSellerEvidence";
-        
+
         vm.prank(seller);
         vm.expectEmit(true, false, false, true);
         emit Disputed(id, url);
         escrows.disputeDelivery(id, url);
 
         (,,,,, IEscrow.State state,) = escrows.escrows(id);
-        assertEq(uint(state), uint(IEscrow.State.DISPUTED));
+        assertEq(uint256(state), uint256(IEscrow.State.DISPUTED));
     }
 
     function testRevert_ThirdPartyCannotDispute() public {
@@ -152,7 +152,7 @@ contract EscrowsTest is Test {
         uint256 id = createEscrow();
         vm.prank(buyer);
         escrows.deposit{value: PRICE}(id);
-        
+
         vm.prank(buyer);
         escrows.disputeDelivery(id, "evidence");
 
@@ -165,7 +165,7 @@ contract EscrowsTest is Test {
         uint256 id = createEscrow();
         vm.prank(buyer);
         escrows.deposit{value: PRICE}(id);
-        
+
         vm.prank(buyer);
         escrows.disputeDelivery(id, "evidence");
 
@@ -175,7 +175,7 @@ contract EscrowsTest is Test {
         escrows.decideDispute(id, PRICE, 0);
 
         (,,,,, IEscrow.State state,) = escrows.escrows(id);
-        assertEq(uint(state), uint(IEscrow.State.COMPLETE)); 
+        assertEq(uint256(state), uint256(IEscrow.State.COMPLETE));
         assertEq(seller.balance, sellerBalanceBefore + PRICE);
     }
 
@@ -183,7 +183,7 @@ contract EscrowsTest is Test {
         uint256 id = createEscrow();
         vm.prank(buyer);
         escrows.deposit{value: PRICE}(id);
-        
+
         vm.prank(buyer);
         escrows.disputeDelivery(id, "evidence");
 
@@ -194,7 +194,7 @@ contract EscrowsTest is Test {
         escrows.decideDispute(id, PRICE / 2, PRICE / 2);
 
         (,,,,, IEscrow.State state,) = escrows.escrows(id);
-        assertEq(uint(state), uint(IEscrow.State.REFUNDED));
+        assertEq(uint256(state), uint256(IEscrow.State.REFUNDED));
         assertEq(seller.balance, sellerBalanceBefore + PRICE / 2);
         assertEq(buyer.balance, buyerBalanceBefore + PRICE / 2);
     }
@@ -220,5 +220,4 @@ contract EscrowsTest is Test {
         vm.expectRevert("Wrong state");
         escrows.decideDispute(id, PRICE, 0);
     }
-
 }
