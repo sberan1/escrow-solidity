@@ -11,6 +11,7 @@ interface IEscrow {
         uint256 amount;
         uint256 requestedAmount;
         State state;
+        string evidenceUrl;
     }
 
     event EscrowCreated(uint256 indexed escrowId, address indexed buyer, address indexed seller);
@@ -18,13 +19,15 @@ interface IEscrow {
     event ItemShipped(uint256 indexed escrowId);
     event Confirmed(uint256 indexed escrowId);
     event DisputeResolved(uint256 indexed escrowId, uint256 sellerRefund, uint256 buyerRefund);
-    event Disputed(uint256 indexed escrowId, string calldata evidenceUrl);
+    event Disputed(uint256 indexed escrowId, string evidenceUrl);
 
 
-    function createEscrow(address _buyer, address payable _seller, address _arbiter, uint256 _requestedAmount) external returns (bool);
+    function createEscrow(address _buyer, address payable _seller, address _arbiter, uint256 _requestedAmount) external returns (uint256);
     function deposit(uint256 _escrowId) external payable;
+    function checkEscrow(uint256 _escrowId) external view returns (Escrow);
     function markShipped(uint256 _escrowId) external;
     function confirmDelivery(uint256 _escrowId) external;
     function disputeDelivery(uint256 _escrowId, string calldata _evidenceUrl) external;
     function decideDispute(uint256 _escrowId, uint256 sellerRefund, uint256 buyerRefund) external;
+    function getEvidence(uint256 _escrowId) external view returns (string memory);
 }
