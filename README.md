@@ -1,17 +1,25 @@
-## Foundry
+## Escrow Manager
+This contract written in Solidity is designed to help with Escrow contracts. It is made for people that need a middleman to execute their transaction safely.
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+### Workflow
+1. **Setup:** The **Seller** creates an escrow contract with the addresses of the **Buyer** and **Arbiter** (agreed upon by both sides). The Seller also specifies the amount to be deposited.
+2. **Deposit:** The **Buyer** deposits the specified amount into the contract.
+3. **Delivery:** After the deposit is made, the **Seller** ships the product.
+4. **Completion:** The **Buyer** confirms delivery. If everything goes well, this triggers the payment to the Seller and the Escrow is finished.
 
-Foundry consists of:
+#### Cancelation
+**Seller** can cancel the escrow if the **Buyer** fails to deposits the funds in timely manner. 
 
-- **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
-- **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
-- **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
-- **Chisel**: Fast, utilitarian, and verbose solidity REPL.
 
-## Documentation
+### Dispute Resolution
+If either side fails to hold up the deal (e.g., Seller ships wrong item, delivery never happens, or Buyer fails to confirm), the **Arbiter** decides the dispute.
 
-https://book.getfoundry.sh/
+*   The Arbiter can split the amount between both sides.
+*   *Example:* If the Buyer finds a scratch on the product that wasn't disclosed, the Arbiter can refund just a part of the money.
+*   The sides decide on Arbiter payment outside of the blockchain.
+*   If the arbiter loses access to the account it's up to the **Buyer** to somehow get the money from him, otherwise they stay in the contract forever lost, every other solution would only create security issue for one side or the other.
+
+The funds are held inside the contract until the dispute is resolved.
 
 ## Usage
 

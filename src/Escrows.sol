@@ -6,6 +6,7 @@ import "./IEscrow.sol";
 contract Escrows is IEscrow{
     uint256 private counter;
     mapping(uint256 => Escrow) public escrows;
+    address public owner = address(0); // My potential address
 
     modifier onlyBuyer(uint256 _id) {
         require(msg.sender == escrows[_id].buyer, "Only buyer can call this");
@@ -53,9 +54,8 @@ contract Escrows is IEscrow{
         return escrowId;
     }
 
-    function deposit(uint256 _escrowId) external payable onlyBuyer(_escrowId){
+    function deposit(uint256 _escrowId) external payable onlyBuyer(_escrowId) inState(_escrowId, State.AWAITING_PAYMENT){
         require(msg.value > 0, "Deposit must be > 0");
-        require(escrows[_escrowId].state == State.AWAITING_PAYMENT, "Wrong state");
         require(msg.value == escrows[_escrowId].requestedAmount, "Not enough value for this escrow");
 
         escrows[_escrowId].amount = msg.value;
@@ -64,13 +64,11 @@ contract Escrows is IEscrow{
         emit Deposited(_escrowId, msg.value);
     }
 
-    function markShipped(uint256 _escrowId) external onlySeller(_escrowId){
-        require(escrows[_escrowId].state == State.AWAITING_DELIVERY, "Wrong state");
+    function markShipped(uint256 _escrowId) external onlySeller(_escrowId) inState(_escrowId, State.AWAITING_DELIVERY){
         emit ItemShipped(_escrowId);
     }
 
-    function confirmDelivery(uint256 _escrowId) external onlyBuyer(_escrowId){
-        require(escrows[_escrowId].state == State.AWAITING_DELIVERY, "Wrong state");
+    function confirmDelivery(uint256 _escrowId) external onlyBuyer(_escrowId) inState(_escrowId, State.AWAITING_DELIVERY){
         escrows[_escrowId].state = State.COMPLETE;
 
         uint256 payment = escrows[_escrowId].amount;
@@ -82,16 +80,13 @@ contract Escrows is IEscrow{
         emit Confirmed(_escrowId);
     }
 
-    function disputeDelivery(uint256 _escrowId, string calldata _evidenceUrl) external onlyBuyerOrSeller(_escrowId){
-        require(escrows[_escrowId].state == State.AWAITING_DELIVERY, "Wrong state");
-
+    function disputeDelivery(uint256 _escrowId, string calldata _evidenceUrl) external onlyBuyerOrSeller(_escrowId) inState(_escrowId, State.AWAITING_DELIVERY){
         escrows[_escrowId].state = State.DISPUTED;
         escrows[_escrowId].evidenceUrl = _evidenceUrl;
         emit Disputed(_escrowId, _evidenceUrl);
     }
 
-    function decideDispute(uint256 _escrowId, uint256 sellerRefund, uint256 buyerRefund) external onlyArbiter(_escrowId){
-        require(escrows[_escrowId].state == State.DISPUTED, "Wrong state");
+    function decideDispute(uint256 _escrowId, uint256 sellerRefund, uint256 buyerRefund) external onlyArbiter(_escrowId) inState(_escrowId, State.DISPUTED){
         require(sellerRefund + buyerRefund == escrows[_escrowId].amount, "Wrong refund amount");
 
         if(buyerRefund > 0){
@@ -116,11 +111,23 @@ contract Escrows is IEscrow{
         emit DisputeResolved(_escrowId, sellerRefund, buyerRefund);
     }
 
-    function checkEscrow(uint256 _escrowId) external onlyBuyerOrSeller(_escrowId) view returns (Escrow){
+    function cancelEscrow(uint256 _escrowId) external onlySeller(_escrowId) inState(_escrowId, State.AWAITING_PAYMENT){
+        escrows[_escrowId].state = State.CANCELED;
+
+        emit Cancelled(_escrowId);
+    }
+
+
+    function checkEscrow(uint256 _escrowId) external onlyBuyerOrSeller(_escrowId) view returns (Escrow memory){
         return escrows[_escrowId];
     }
 
-    function getEvidence(uint256 _escrowId) external view returns (string memory){
+    function getEvidence(uint256 _escrowId) external inState(_escrowId, State.DISPUTED) view returns (string memory){
         return escrows[_escrowId].evidenceUrl;
+    }
+
+    function selfDestruct() external {
+        require(msg.sender == owner, "Only owner can call this");
+        selfdestruct(payable(owner));
     }
 }
